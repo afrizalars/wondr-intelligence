@@ -1,0 +1,26 @@
+### Design & Branding Guidelines:
+- **Color Palette**: 
+  - Base: Off-white (#F7F7F7), soft beige (#F0EDE8)
+  - Translucent Panels: White with 60–80% opacity + slight blur (backdrop-filter: blur(8px))
+  - Accents: Pastel blue (#A4C8E7), blush pink (#E7C8D2), soft mint (#C8E7D5)
+- **Typography**:
+  - Headings: SF Pro Display Bold, 24–32px
+  - Subheadings: SF Pro Text Medium, 18–20px
+  - Body: SF Pro Text Regular, 16px, line-height 1.5
+  - Captions: 14px, high contrast
+- **Layout & Spacing**:
+  - 8px grid system for consistent padding/margins
+  - Generous white space for clarity and executive readability
+  - Logical grouping of related data within frosted glass cards
+- **Components**:
+  - **Cards/Panels**: Glassmorphic background, soft shadows, radius 12–16px
+  - **Buttons**: Pill-shaped, subtle gradient fills, hover/focus animations
+  - **Inputs**: Rounded edges, soft inner shadow, pastel glow on focus
+  - **Charts**: Pastel color fills, minimal lines, refined tooltips
+  - **Tables**: Zebra striping, hover highlights, clear separation
+- **Animations & Microinteractions**:
+  - Soft fade-ins, crossfades, and gentle scaling (<200ms)
+  - Smooth hover effects without distracting motion
+- **Accessibility**:
+  - WCAG 2.1 AA contrast compliance
+  - Minimum tap/click target size: 44x44px
