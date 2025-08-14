@@ -33,8 +33,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      Data Layer                              │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ PostgreSQL  │  │   pgvector    │  │    Redis      │      │
-│  │   Supabase  │  │  Embeddings   │  │    Cache      │      │
+│  │ PostgreSQL  │  │   pgvector    │  │   In-Memory   │      │
+│  │   15+       │  │  Embeddings   │  │    Cache      │      │
 │  └─────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -72,55 +72,65 @@
 
 ### Frontend
 ```yaml
-Framework: React 18+
-Language: TypeScript 5+
-Build Tool: Vite
-State Management: React Query + Context API
-UI Library: Material-UI v5
+Framework: React 18.3+
+Language: TypeScript 5.6+
+Build Tool: Vite 5.4+
+State Management: React Query (TanStack Query v5) + Context API
+UI Library: Material-UI v6
 Styling: Emotion + CSS-in-JS
-Testing: Vitest + React Testing Library
-Linting: ESLint + Prettier
+Routing: React Router v6
+Charts: Recharts + Chart.js
+Forms: React Hook Form
+HTTP Client: Axios
+Linting: ESLint + TypeScript ESLint
 ```
 
 ### Backend
 ```yaml
-Framework: FastAPI
+Framework: FastAPI 0.115+
 Language: Python 3.11+
-ORM: SQLAlchemy
-Validation: Pydantic
-Authentication: JWT (PyJWT)
-Testing: Pytest
-Linting: Ruff + Black
-Documentation: OpenAPI/Swagger
+ORM: SQLAlchemy 2.0+
+Async Driver: asyncpg + psycopg2
+Validation: Pydantic v2
+Authentication: JWT (python-jose)
+Password Hashing: Passlib + bcrypt
+Testing: Pytest + pytest-asyncio
+Migrations: Alembic
+Documentation: OpenAPI/Swagger (auto-generated)
 ```
 
 ### Database
 ```yaml
-Primary: PostgreSQL 15+
-Vector Store: pgvector
-Cache: Redis
-Search: PostgreSQL Full Text Search
+Primary: PostgreSQL 15+ with pgvector extension
+Vector Store: pgvector (1536 dimensions)
+Cache: In-memory dictionary (application level)
+Search: Vector similarity search + PostgreSQL Full Text Search
 Backup: Automated daily backups
 Migration: Alembic
+Connection Pool: asyncpg
 ```
 
 ### Infrastructure
 ```yaml
 Container: Docker
-Orchestration: Docker Compose (dev), Kubernetes (prod)
-CI/CD: GitHub Actions
-Monitoring: Prometheus + Grafana
-Logging: ELK Stack
-APM: OpenTelemetry
+Orchestration: Docker Compose
+Version Control: Git + GitHub
+Development Ports:
+  - Frontend: 5173 (Vite dev server)
+  - Backend: 8001 (FastAPI)
+  - Database: 5432 (PostgreSQL)
+Environment Management: python-dotenv
 ```
 
 ### AI/ML
 ```yaml
-LLM: OpenAI GPT-4
-Embeddings: OpenAI text-embedding-3-small
-Vector Search: pgvector
-ML Framework: scikit-learn (future)
-Feature Store: PostgreSQL
+LLM: Anthropic Claude (claude-3-haiku-20240307)
+API Client: anthropic Python SDK
+Embeddings: sentence-transformers (intfloat/multilingual-e5-base)
+Embedding Dimensions: 768
+Vector Search: pgvector with ivfflat index
+ML Framework: PyTorch (CPU only)
+Chunk Size: 1000 chars with 200 overlap
 ```
 
 ## Service Architecture
@@ -168,7 +178,7 @@ class LLMService:
     - extract_entities()
     
 Responsibilities:
-- OpenAI API integration
+- Anthropic Claude API integration
 - Prompt engineering
 - Response formatting
 - Token management
@@ -433,16 +443,27 @@ logger.info("search_request", {
 - CRITICAL: System failures
 ```
 
-### Distributed Tracing
+### Application Monitoring
 ```python
-# OpenTelemetry implementation
-from opentelemetry import trace
+# Simple logging-based monitoring (current implementation)
+import logging
+from datetime import datetime
 
-tracer = trace.get_tracer(__name__)
+logger = logging.getLogger(__name__)
 
-with tracer.start_as_current_span("search_operation"):
-    # Operation logic
-    pass
+# Log important operations
+logger.info("search_request", {
+    "user_id": user_id,
+    "query": query,
+    "latency_ms": latency_ms,
+    "timestamp": datetime.utcnow()
+})
+
+# Note: For production, consider implementing:
+# - Structured logging with JSON format
+# - Log aggregation service
+# - Metrics collection (Prometheus/Grafana)
+# - Distributed tracing (OpenTelemetry)
 ```
 
 ## Deployment Architecture
@@ -530,24 +551,44 @@ wondr-intelligence/
 ```
 
 ### Testing Strategy
-```
-Unit Tests: 80% coverage minimum
-Integration Tests: API endpoints
-E2E Tests: Critical user flows
-Performance Tests: Load testing
-Security Tests: Vulnerability scanning
+```yaml
+Backend Testing:
+  - Framework: pytest + pytest-asyncio
+  - Unit tests for services
+  - Integration tests for API endpoints
+  - Test data generation with Faker
+
+Frontend Testing:
+  - Type checking: TypeScript strict mode
+  - Linting: ESLint
+  - Build validation: tsc && vite build
+
+Future Testing Goals:
+  - Unit test coverage: 80% minimum
+  - E2E tests for critical user flows
+  - Performance testing
+  - Security vulnerability scanning
 ```
 
 ### CI/CD Pipeline
 ```yaml
+# Current: Manual deployment
+# Version Control: Git + GitHub
+
+# Recommended CI/CD Pipeline:
 stages:
-  - lint
-  - test
-  - build
-  - security-scan
-  - deploy-staging
-  - integration-tests
-  - deploy-production
+  - lint        # ESLint for frontend, ruff for backend
+  - type-check  # TypeScript validation
+  - test        # pytest for backend
+  - build       # Docker image creation
+  - deploy      # Environment-based deployment
+
+# GitHub Actions workflow (recommended):
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 ```
 
 ---

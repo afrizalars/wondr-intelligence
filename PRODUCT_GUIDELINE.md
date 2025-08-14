@@ -1,352 +1,332 @@
 # Product Guidelines - Wondr Intelligence
 
-## Product Vision
-Wondr Intelligence is an AI-powered financial insights platform that transforms raw transaction data into actionable intelligence, helping users understand and optimize their spending patterns through natural language queries and sophisticated data analysis.
+## Product Overview
+Wondr Intelligence is an AI-powered financial insights platform that enables users to query their transaction data using natural language, providing instant, actionable insights about spending patterns in Indonesian Rupiah (IDR).
 
-## Core Value Proposition
+## Current Features (v1.0)
 
-### Primary Value
-- **Instant Financial Intelligence**: Transform complex transaction data into clear, actionable insights
-- **Natural Language Understanding**: Query financial data conversationally without technical knowledge
-- **Real-time Analysis**: Get immediate answers about spending patterns and trends
-- **Personalized Insights**: AI-driven recommendations tailored to individual spending behavior
+### 1. Authentication System
+**Status**: ✅ Fully Implemented
 
-### Target Users
-1. **Primary**: Individual consumers tracking personal finances
-2. **Secondary**: Small business owners monitoring cash flow
-3. **Tertiary**: Financial advisors analyzing client spending patterns
+#### Login Screen
+- Apple-inspired glassmorphic design
+- Email and password authentication
+- JWT token-based sessions
+- Animated gradient background
+- "Forgot Password" link (UI only)
 
-## Product Principles
+#### Registration Screen
+- Full name, email, username, password fields
+- Password strength indicator with visual feedback
+- Real-time password match validation
+- Glassmorphic card design with soft shadows
+- Smooth transitions and animations
 
-### 1. Simplicity First
-- Complex data should be presented simply
-- Every feature must pass the "grandmother test" - intuitive enough for non-technical users
-- Reduce cognitive load through progressive disclosure
-- Natural language over technical jargon
+**User Flow**:
+1. User lands on login page
+2. New users click "Create Account" → Register page
+3. Fill registration form with validation
+4. Password strength shown in real-time
+5. Submit → Auto-login → Redirect to Playground
 
-### 2. Intelligence That Matters
-- Focus on actionable insights, not just data visualization
-- Predictive analytics over historical reporting
-- Contextual recommendations based on user behavior
-- Smart categorization and pattern recognition
+### 2. Main Dashboard
+**Status**: ✅ Fully Implemented
 
-### 3. Privacy & Security
-- End-to-end encryption for all financial data
-- No selling or sharing of user data
-- Transparent data usage policies
-- User control over data retention
+#### Navigation Sidebar
+- **Playground** - Main search interface (Active)
+- **Merchants** - Merchant catalog (Placeholder)
+- **Guardrails** - Content moderation rules (Placeholder)
+- **Prompt Templates** - Template management (Placeholder)
+- **API Keys** - API key management (Placeholder)
+- **Search History** - Query history viewer (Placeholder)
+- **Global Knowledge** - Knowledge base (Placeholder)
 
-### 4. Speed & Reliability
-- Sub-second query responses
-- 99.9% uptime commitment
-- Offline capability for critical features
-- Real-time synchronization across devices
+#### Top Navigation Bar
+- User profile menu
+- Notifications icon (UI only)
+- Settings access
+- Logout functionality
+- Collapsible sidebar toggle
 
-## Feature Hierarchy
+### 3. Playground (Core Feature)
+**Status**: ✅ Fully Implemented
 
-### Core Features (MVP)
-1. **Natural Language Search**
-   - Query transactions conversationally
-   - Multi-language support (starting with English and Indonesian)
-   - Context-aware responses
+#### Search Interface
+**Components**:
+- Natural language query input box
+- CIF selector (Customer Identification)
+- Suggested query chips
+- Real-time search execution
+- Response display area
 
-2. **Transaction Intelligence**
-   - Automatic categorization
-   - Merchant enrichment
-   - Spending pattern analysis
-   - Anomaly detection
+**Suggested Queries**:
+- "What are my spending trends?"
+- "Show my top merchants"
+- "Analyze my food expenses"
+- "How much did I save last month?"
+- "Show recent transactions"
+- "What's my biggest expense category?"
 
-3. **Smart Insights Dashboard**
-   - Personalized spending summaries
-   - Trend visualization
-   - Budget tracking
-   - Predictive alerts
+#### Mobile Experience Preview
+**Live iPhone Mockup Display**:
+- Real-time transaction cards
+- Merchant logos with gradient backgrounds
+- Transaction amounts in Rupiah (Rp)
+- Category badges
+- Date grouping
+- Search filtering
+- Transaction details on tap
 
-### Secondary Features (Phase 2)
-1. **Advanced Analytics**
-   - Cash flow forecasting
-   - Subscription detection and management
-   - Tax optimization suggestions
-   - Investment opportunity identification
+**Transaction Card Features**:
+- Merchant name and logo
+- Amount in IDR format
+- Category classification
+- Transaction date
+- Booking status
+- Location details (when available)
 
-2. **Collaboration Features**
-   - Shared household budgets
-   - Financial goal setting
-   - Expense splitting
-   - Family financial planning
+#### Intelligence Response Panel
+**Response Structure**:
+1. **AI Answer**: Natural language response with insights
+2. **Transaction Details**: Auto-expanded when relevant
+3. **Source Citations**: Vector search results
+4. **Performance Metrics**:
+   - Response latency (ms)
+   - Model used (Claude Haiku)
+   - Guardrail status
 
-3. **Integration Ecosystem**
-   - Bank API connections
-   - Payment gateway integrations
-   - Accounting software sync
-   - Export capabilities
+**Transaction Display**:
+- Glass morphism cards
+- Hover animations
+- Category color coding
+- Amount formatting with thousand separators
+- Merchant iconography
 
-### Future Features (Phase 3)
-1. **AI Financial Advisor**
-   - Personalized financial planning
-   - Investment recommendations
-   - Debt optimization strategies
-   - Retirement planning
+### 4. Data Processing Pipeline
+**Status**: ✅ Fully Implemented
 
-2. **Marketplace**
-   - Financial product recommendations
-   - Cashback opportunities
-   - Discount discovery
-   - Loyalty program optimization
+#### Search Flow
+1. **Query Input** → User enters natural language question
+2. **Context Building** → CIF-based transaction retrieval
+3. **Vector Search** → Semantic similarity matching
+4. **LLM Processing** → Claude generates response
+5. **Response Formatting** → Structured output with citations
+6. **Transaction Enrichment** → Related transactions included
 
-## User Experience Guidelines
+#### Supported Query Types
+- **Spending Analysis**: "Show my spending patterns"
+- **Merchant Queries**: "How much at Starbucks?"
+- **Category Analysis**: "Food expenses this month"
+- **Trend Detection**: "Am I spending more?"
+- **Savings Insights**: "How much did I save?"
+- **Transaction Search**: "Recent large purchases"
 
-### Onboarding Flow
-1. **Welcome & Value Prop** (30 seconds)
-   - Clear value statement
-   - Visual demonstration
-   - Trust indicators
+## User Experience Flow
 
-2. **Account Creation** (1 minute)
-   - Minimal required fields
-   - Social login options
-   - Progressive profiling
+### Primary User Journey
+```
+1. Landing → Login/Register
+   ↓
+2. Authentication → JWT Token
+   ↓
+3. Dashboard → Playground Default
+   ↓
+4. Query Input → Natural Language
+   ↓
+5. AI Response → Insights + Transactions
+   ↓
+6. Interactive Exploration → Filter/Details
+```
 
-3. **Data Connection** (2 minutes)
-   - Bank account linking
-   - Manual CSV upload option
-   - Sample data exploration
+### Query Interaction Flow
+```
+1. Type or Select Query
+   ↓
+2. Real-time Processing Indicator
+   ↓
+3. Animated Response Display
+   ↓
+4. Auto-expand Transaction Details
+   ↓
+5. Interactive Transaction Cards
+   ↓
+6. Source Citations Available
+```
 
-4. **First Query** (30 seconds)
-   - Guided first question
-   - Suggested queries
-   - Immediate value delivery
+## Design System Implementation
 
-### Query Experience
-1. **Input Methods**
-   - Natural language text
-   - Voice input (future)
-   - Suggested queries
-   - Query templates
+### Visual Components
+- **Glass Cards**: 70% white opacity with 8px blur
+- **Gradient Backgrounds**: Purple to violet animated gradients
+- **Pastel Accents**: Blue (#A4C8E7), Pink (#E7C8D2), Mint (#C8E7D5)
+- **Typography**: SF Pro Display/Text, 16px base
+- **Spacing**: 8px grid system
+- **Animations**: <200ms transitions
 
-2. **Response Format**
-   - Direct answer first
-   - Supporting visualizations
-   - Related insights
-   - Follow-up suggestions
+### Interaction Patterns
+- **Hover Effects**: Subtle elevation and glow
+- **Focus States**: Pastel blue outline with glow
+- **Loading States**: Skeleton screens with shimmer
+- **Success Feedback**: Mint green indicators
+- **Error States**: Soft pink backgrounds
 
-3. **Interaction Patterns**
-   - Conversational flow
-   - Context retention
-   - Query refinement
-   - Drill-down capability
+## Technical Integration
+
+### Frontend Architecture
+```
+React 18.3 + TypeScript
+├── Authentication (Context API)
+├── API Integration (Axios + React Query)
+├── UI Components (Material-UI v6)
+├── State Management (React Query)
+└── Routing (React Router v6)
+```
+
+### Backend Services
+```
+FastAPI + PostgreSQL
+├── Authentication Service (JWT)
+├── Search Service (Vector + Semantic)
+├── LLM Service (Anthropic Claude)
+├── Embedding Service (Multilingual E5)
+└── Transaction Service (PostgreSQL)
+```
+
+### Data Flow
+```
+User Query → API Gateway → Search Service
+                ↓
+        Vector Embeddings
+                ↓
+        Similarity Search
+                ↓
+        LLM Processing
+                ↓
+        Response Formatting
+                ↓
+        Frontend Display
+```
+
+## Current Limitations & Placeholders
+
+### Placeholder Features (UI Only)
+1. **Merchants Management** - Catalog interface pending
+2. **Guardrails Configuration** - Rules editor pending
+3. **Prompt Templates** - Template builder pending
+4. **API Keys Management** - Key generation pending
+5. **Search History** - History viewer pending
+6. **Global Knowledge** - Knowledge base pending
+
+### Known Constraints
+- Single CIF support (CIF00000001)
+- Indonesian Rupiah only
+- 8 transaction display limit
+- No real-time data sync
+- No export functionality
+- No collaborative features
+
+## Performance Specifications
+
+### Response Times
+- **Login/Register**: <500ms
+- **Query Processing**: <2s average
+- **Transaction Display**: Instant (cached)
+- **Page Navigation**: <200ms
+- **Animation Duration**: 150-200ms
+
+### Capacity
+- **Concurrent Users**: 100 (current)
+- **Query Rate**: 10/second
+- **Transaction Records**: 10,000 per CIF
+- **Vector Dimensions**: 768
+- **Cache Duration**: Session-based
+
+## Security Features
+
+### Implemented
+- JWT authentication with expiry
+- Password hashing (bcrypt)
+- CORS protection
+- SQL injection prevention
+- XSS protection
+
+### Pending
+- Two-factor authentication
+- API rate limiting
+- Audit logging
+- Data encryption at rest
+- Session management
+
+## Localization
+
+### Current Support
+- **Currency**: Indonesian Rupiah (IDR/Rp)
+- **Language**: English interface
+- **Date Format**: International
+- **Number Format**: Thousand separators
+
+### Future Expansion
+- Bahasa Indonesia translation
+- Multi-currency support
+- Regional date formats
+- Local payment methods
 
 ## Success Metrics
 
 ### User Engagement
-- Daily Active Users (DAU)
-- Average queries per session
-- Session duration
-- Return rate (7-day, 30-day)
+- **Active Sessions**: Track daily usage
+- **Query Volume**: Measure search frequency
+- **Response Quality**: User satisfaction
+- **Feature Adoption**: Navigation patterns
 
-### Product Quality
-- Query response time (<500ms target)
-- Answer accuracy rate (>95% target)
-- System uptime (99.9% target)
-- Error rate (<0.1% target)
+### System Performance
+- **Uptime**: 99.9% target
+- **Response Time**: <2s p95
+- **Error Rate**: <1%
+- **Query Success**: >95%
 
-### Business Impact
-- User acquisition cost (CAC)
-- Customer lifetime value (CLV)
-- Monthly recurring revenue (MRR)
-- Net promoter score (NPS)
+## Roadmap Priorities
 
-## Release Strategy
-
-### Version 1.0 (Current)
+### Phase 1 (Current) ✅
 - Core search functionality
-- Basic transaction intelligence
-- Simple insights dashboard
-- Indonesian market focus
+- Authentication system
+- Transaction display
+- Mobile preview
 
-### Version 1.1 (Q2 2025)
-- Enhanced AI responses
-- Multi-bank support
-- Mobile applications
-- Advanced categorization
+### Phase 2 (Next)
+- Merchant management
+- Search history
+- Export functionality
+- Real guardrails
 
-### Version 2.0 (Q3 2025)
-- Predictive analytics
-- Collaboration features
-- API marketplace
-- Enterprise features
-
-## Competitive Differentiation
-
-### vs. Traditional Banking Apps
-- Natural language interface
-- Cross-bank aggregation
-- AI-powered insights
-- Modern user experience
-
-### vs. Budget Tracking Apps
-- Conversational queries
-- Real-time intelligence
-- Predictive capabilities
-- Contextual recommendations
-
-### vs. Financial Advisors
-- 24/7 availability
-- Instant responses
-- Data-driven objectivity
-- Scalable personalization
-
-## Localization Strategy
-
-### Indonesia First
-- Rupiah (IDR) native support
-- Local bank integrations
-- Bahasa Indonesia interface
-- Local merchant database
-- Indonesian tax considerations
-
-### Regional Expansion
-- Singapore (SGD)
-- Malaysia (MYR)
-- Thailand (THB)
-- Philippines (PHP)
-
-## Monetization Strategy
-
-### Freemium Model
-**Free Tier**
-- 100 queries/month
-- Basic insights
-- 3-month history
-- 1 bank connection
-
-**Premium Tier ($9.99/month)**
-- Unlimited queries
+### Phase 3 (Future)
+- Multi-user support
+- Collaborative features
 - Advanced analytics
-- Full history
-- Unlimited connections
-- Priority support
+- API marketplace
 
-**Business Tier ($49.99/month)**
-- Team collaboration
-- API access
-- Custom integrations
-- Dedicated support
-- White-label options
+## Development Guidelines
 
-### Revenue Streams
-1. Subscription revenue (primary)
-2. Transaction fees on premium features
-3. B2B API licensing
-4. Affiliate commissions (ethical only)
-5. Anonymous aggregated insights (with consent)
+### Code Standards
+- TypeScript strict mode
+- Component-based architecture
+- Responsive design first
+- Accessibility compliance
 
-## Ethical Guidelines
+### Testing Requirements
+- Component rendering tests
+- API integration tests
+- Authentication flow tests
+- Performance benchmarks
 
-### Data Ethics
-- Transparent data usage
-- User consent first
-- Right to deletion
-- No dark patterns
-- Clear privacy policies
-
-### Financial Ethics
-- No predatory lending promotion
-- Unbiased recommendations
-- Educational content priority
-- Responsible credit guidance
-- Anti-addiction measures
-
-### AI Ethics
-- Explainable AI decisions
-- Bias detection and mitigation
-- Human oversight capability
-- Continuous fairness auditing
-- Transparent limitations
-
-## Support Strategy
-
-### Self-Service
-- Comprehensive help center
-- Interactive tutorials
-- Community forum
-- Video guides
-- FAQ section
-
-### Assisted Support
-- In-app chat (business hours)
-- Email support (24-hour response)
-- Priority phone support (premium)
-- Dedicated account managers (enterprise)
-
-## Quality Standards
-
-### Performance
-- Page load: <2 seconds
-- Query response: <500ms
-- API latency: <100ms
-- Mobile app startup: <3 seconds
-
-### Reliability
-- 99.9% uptime SLA
-- <1% error rate
-- Zero data loss
-- Automated backups
-
-### Security
-- SOC 2 compliance
-- PCI DSS compliance
-- End-to-end encryption
-- Regular security audits
-- Bug bounty program
-
-## Product Roadmap Prioritization
-
-### Prioritization Framework
-1. **User Impact** (40%)
-   - Number of users affected
-   - Severity of problem solved
-   - Frequency of use
-
-2. **Business Value** (30%)
-   - Revenue potential
-   - Market differentiation
-   - Strategic alignment
-
-3. **Technical Feasibility** (20%)
-   - Development effort
-   - Technical risk
-   - Maintenance burden
-
-4. **Innovation** (10%)
-   - Market leadership
-   - Future positioning
-   - Learning opportunity
-
-## Feedback Loops
-
-### User Feedback
-- In-app feedback widget
-- Regular user surveys
-- User interviews
-- Beta testing program
-- Community feedback portal
-
-### Data-Driven Insights
-- Analytics tracking
-- A/B testing framework
-- Cohort analysis
-- Funnel optimization
-- Behavior tracking
-
-### Stakeholder Input
-- Monthly stakeholder reviews
-- Quarterly business reviews
-- Customer advisory board
-- Partner feedback sessions
+### Documentation
+- API documentation (OpenAPI)
+- Component storybook
+- User guides
+- Developer setup
 
 ---
 
 *Last Updated: January 2025*
 *Version: 1.0*
-*Owner: Product Team*
+*Status: Production Ready (Core Features)*
