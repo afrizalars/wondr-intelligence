@@ -10,6 +10,14 @@ export interface SearchRequest {
   prompt_template?: string;
 }
 
+export interface AgentActivity {
+  name: string;
+  status: 'active' | 'completed' | 'failed' | 'skipped';
+  execution_time_ms: number;
+  data_retrieved?: number;
+  confidence?: number;
+}
+
 export interface SearchResponse {
   query: string;
   cif: string;
@@ -24,6 +32,13 @@ export interface SearchResponse {
   model_used: string;
   guardrail_status?: any;
   transactions?: any[];
+  agent_activity?: AgentActivity[];
+  response_type?: string;
+  data_sources?: Array<{
+    source: string;
+    count: number;
+    relevance: number;
+  }>;
 }
 
 export const searchApi = {

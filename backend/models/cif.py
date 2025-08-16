@@ -73,7 +73,6 @@ class TransferContact(Base):
     contact_type = Column(String, default='personal')
     frequency = Column(Integer, default=0)
     last_transfer_date = Column(Date)
-    total_amount = Column(Numeric(15, 2), default=0)
     meta_data = Column("metadata", JSONB, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

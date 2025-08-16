@@ -1,5 +1,5 @@
 from anthropic import AsyncAnthropic
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from app.config import settings
 import logging
 from datetime import datetime
@@ -14,7 +14,7 @@ class LLMService:
     async def generate_response(
         self,
         query: str,
-        context: List[Dict[str, Any]],
+        context: Union[List[Dict[str, Any]], str],  # Can be List[Dict] for legacy or str for new agent system
         prompt_template: Optional[str] = None,
         conversation_history: Optional[List[Dict]] = None,
         model: Optional[str] = None
@@ -23,7 +23,12 @@ class LLMService:
         
         # Build the prompt
         system_prompt = self._build_system_prompt(prompt_template)
-        user_prompt = self._build_user_prompt(query, context)
+        
+        # Check if context is from new agent system (string) or legacy (list)
+        if isinstance(context, str):
+            user_prompt = context  # Already formatted by reasoning service
+        else:
+            user_prompt = self._build_user_prompt(query, context)
         
         # Prepare messages
         messages = []
@@ -37,7 +42,7 @@ class LLMService:
         try:
             response = await self.client.messages.create(
                 model=model or self.default_model,
-                max_tokens=200,  # Shorter responses for Apple Intelligence style
+                max_tokens=400,  # Allow for detailed transaction lists when needed
                 temperature=0.3,  # Lower temperature for more consistent, factual responses
                 system=system_prompt,
                 messages=messages
@@ -48,12 +53,19 @@ class LLMService:
             
             latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
             
+            # Extract citations based on context type
+            if isinstance(context, str):
+                # For agent system, citations are embedded in the context
+                citations = []
+            else:
+                citations = self._extract_citations(context)
+            
             return {
                 "answer": answer,
                 "model": model or self.default_model,
                 "tokens_used": tokens_used,
                 "latency_ms": latency_ms,
-                "citations": self._extract_citations(context)
+                "citations": citations
             }
         except Exception as e:
             logger.error(f"LLM generation error: {e}")
@@ -71,29 +83,66 @@ Tone: Clear, human, approachable, and non-technical.
 Sentence length: Short and easy to scan.
 Formatting: Use plain text, no extra decoration unless specified.
 
+## Response Templates
+
+### For Summary Questions ("show my spending", "how much did I spend"):
 Structure:
-1. Start with the most important number or fact.
-2. Compare it with a relevant baseline (e.g., last month, average, target).
-3. Give one short contextual insight or takeaway.
+1. Start with the total amount spent
+2. Mention the time period
+3. Highlight top 2-3 merchants/categories
+4. One insight about spending pattern
+
+Example:
+"You've spent Rp 4,429,731 on food this month. Your top merchants are Alfamart (Rp 791,990) and Starbucks (Rp 506,773). Food spending is up 23% from last month."
+
+### For Detail Questions ("show me the details", "list my transactions", "what exactly did I buy"):
+Structure:
+1. Brief summary line
+2. List 5-8 most recent/relevant transactions with:
+   - Date
+   - Merchant name
+   - Amount
+   - Category (if relevant)
+3. Closing insight
+
+Example:
+"Here are your recent food transactions:
+• Aug 15: McDonald's - Rp 112,732 (restaurant)
+• Aug 15: Alfamart - Rp 31,723 (grocery)
+• Aug 13: Starbucks - Rp 158,964 (cafe)
+• Aug 11: Gojek - Rp 267,690 (food delivery)
+• Aug 10: Pizza Hut - Rp 121,069 (restaurant)
+You're averaging Rp 138,429 per food transaction."
+
+### For Specific Merchant Questions ("How much at Starbucks?"):
+Structure:
+1. Total spent at that merchant
+2. Number of transactions
+3. Average per visit
+4. Comparison or trend
+
+Example:
+"You've spent Rp 506,773 at Starbucks across 3 visits. That's Rp 168,924 per visit on average, making Starbucks your 4th highest food merchant this month."
+
+### For Category Analysis ("grocery spending", "restaurant expenses"):
+Structure:
+1. Total for that category
+2. Percentage of total spending
+3. Top merchants in category
+4. Trend or insight
+
+Example:
+"Your grocery spending is Rp 1,343,692 this month, making up 30% of your food budget. Most of this is at Alfamart (Rp 791,990) and Transmart (Rp 551,701)."
 
 Rules:
-- No jargon or overly complex terms.
-- Always format currency amounts in Indonesian Rupiah (Rp) with proper thousand separators.
-- Use everyday language ("more than", "less than", "up from", "makes up X%").
-- Avoid unnecessary filler words.
-- Never explain how you calculated — just give the result confidently.
-- Keep responses to 2-3 sentences maximum.
-- All monetary values are in IDR (Indonesian Rupiah) - always use "Rp" prefix.
-- Format large numbers with commas as thousand separators (e.g., Rp 2,036,100.41).
-
-Example style:
-"You've spent Rp 31,910 at Starbucks this month, which is Rp 9,000 more than last month. Starbucks makes up 12% of your total Food and Drink spending this month."
-
-When analyzing transactions:
-- Focus on the key metric first
-- Make one meaningful comparison
-- Add one insight that matters
-- Always use Rp for currency amounts"""
+- Always format currency as Rp with thousand separators (Rp 1,234,567)
+- Use bullet points (•) for transaction lists
+- Keep individual sentences under 20 words
+- For details, show 5-8 transactions maximum unless specifically asked for more
+- Include merchant names exactly as they appear in data
+- Add category/type only when it adds value
+- Never use technical database terms
+- Respond based on the question type - summary vs details"""
         
         if template:
             return f"{base_prompt}\n\nAdditional context:\n{template}"

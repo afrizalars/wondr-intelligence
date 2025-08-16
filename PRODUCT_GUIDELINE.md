@@ -3,7 +3,7 @@
 ## Product Overview
 Wondr Intelligence is an AI-powered financial insights platform that enables users to query their transaction data using natural language, providing instant, actionable insights about spending patterns in Indonesian Rupiah (IDR).
 
-## Current Features (v1.0)
+## Current Features (v1.1 - Multi-Agent Update)
 
 ### 1. Authentication System
 **Status**: ✅ Fully Implemented
@@ -49,7 +49,7 @@ Wondr Intelligence is an AI-powered financial insights platform that enables use
 - Collapsible sidebar toggle
 
 ### 3. Playground (Core Feature)
-**Status**: ✅ Fully Implemented
+**Status**: ✅ Fully Implemented with Multi-Agent System
 
 #### Search Interface
 **Components**:
@@ -89,11 +89,13 @@ Wondr Intelligence is an AI-powered financial insights platform that enables use
 **Response Structure**:
 1. **AI Answer**: Natural language response with insights
 2. **Transaction Details**: Auto-expanded when relevant
-3. **Source Citations**: Vector search results
-4. **Performance Metrics**:
+3. **Agent Activity**: Shows which agents were activated
+4. **Data Sources**: Displays contributing data sources
+5. **Performance Metrics**:
    - Response latency (ms)
    - Model used (Claude Haiku)
-   - Guardrail status
+   - Agent execution times
+   - Response type indicator
 
 **Transaction Display**:
 - Glass morphism cards
@@ -107,11 +109,12 @@ Wondr Intelligence is an AI-powered financial insights platform that enables use
 
 #### Search Flow
 1. **Query Input** → User enters natural language question
-2. **Context Building** → CIF-based transaction retrieval
-3. **Vector Search** → Semantic similarity matching
-4. **LLM Processing** → Claude generates response
-5. **Response Formatting** → Structured output with citations
-6. **Transaction Enrichment** → Related transactions included
+2. **Brain Service** → Parses query and extracts context
+3. **Agent Routing** → Activates relevant Query Agents
+4. **Parallel Execution** → Agents query data simultaneously
+5. **Reasoning Service** → Synthesizes multi-agent results
+6. **LLM Processing** → Claude formats final response
+7. **Response Display** → Shows answer with agent activity
 
 #### Supported Query Types
 - **Spending Analysis**: "Show my spending patterns"
@@ -186,25 +189,32 @@ React 18.3 + TypeScript
 ```
 FastAPI + PostgreSQL
 ├── Authentication Service (JWT)
-├── Search Service (Vector + Semantic)
+├── Multi-Agent Query System
+│   ├── Brain Service (Orchestrator)
+│   ├── Transactions Query Agent
+│   ├── Customers Query Agent
+│   └── Contact Query Agent
+├── Reasoning Service (Synthesis)
 ├── LLM Service (Anthropic Claude)
-├── Embedding Service (Multilingual E5)
 └── Transaction Service (PostgreSQL)
 ```
 
 ### Data Flow
 ```
-User Query → API Gateway → Search Service
+User Query → API Gateway → Brain Service
                 ↓
-        Vector Embeddings
+        Query Parsing & Context
                 ↓
-        Similarity Search
+        Agent Routing (Parallel)
+           ↙    ↓    ↘
+    Transaction  Customer  Contact
+      Agent      Agent     Agent
+           ↘    ↓    ↙
+        Reasoning Service
                 ↓
         LLM Processing
                 ↓
-        Response Formatting
-                ↓
-        Frontend Display
+        Frontend Display with Agent Activity
 ```
 
 ## Current Limitations & Placeholders

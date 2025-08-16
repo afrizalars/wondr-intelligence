@@ -24,8 +24,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      Service Layer                           │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   LLM       │  │  Embeddings   │  │   Search      │      │
-│  │  Service    │  │   Service     │  │   Service     │      │
+│  │   LLM       │  │  Multi-Agent  │  │   Reasoning   │      │
+│  │  Service    │  │    System     │  │   Service     │      │
 │  └─────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -33,8 +33,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      Data Layer                              │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ PostgreSQL  │  │   pgvector    │  │   In-Memory   │      │
-│  │   15+       │  │  Embeddings   │  │    Cache      │      │
+│  │ PostgreSQL  │  │   Direct SQL  │  │   In-Memory   │      │
+│  │   15+       │  │    Queries    │  │    Cache      │      │
 │  └─────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -101,13 +101,14 @@ Documentation: OpenAPI/Swagger (auto-generated)
 
 ### Database
 ```yaml
-Primary: PostgreSQL 15+ with pgvector extension
-Vector Store: pgvector (1536 dimensions)
+Primary: PostgreSQL 15+
+Query Method: Direct SQL queries via Query Agents
 Cache: In-memory dictionary (application level)
-Search: Vector similarity search + PostgreSQL Full Text Search
+Search: Multi-agent system with specialized Query Agents
 Backup: Automated daily backups
 Migration: Alembic
 Connection Pool: asyncpg
+Indexes: Optimized for transaction search (date, merchant, category, type)
 ```
 
 ### Infrastructure
@@ -126,11 +127,13 @@ Environment Management: python-dotenv
 ```yaml
 LLM: Anthropic Claude (claude-3-haiku-20240307)
 API Client: anthropic Python SDK
-Embeddings: sentence-transformers (intfloat/multilingual-e5-base)
-Embedding Dimensions: 768
-Vector Search: pgvector with ivfflat index
-ML Framework: PyTorch (CPU only)
-Chunk Size: 1000 chars with 200 overlap
+Query System: Multi-agent architecture
+Agent Types:
+  - Brain Service (orchestrator)
+  - Transactions Query Agent
+  - Customers Query Agent
+  - Contact Query Agent
+Reasoning: Synthesis service for multi-agent results
 ```
 
 ## Service Architecture
@@ -185,20 +188,41 @@ Responsibilities:
 - Rate limiting
 ```
 
-#### Search Service
+#### Multi-Agent Query System
 ```python
-class SearchService:
-    - vector_search()
-    - hybrid_search()
-    - semantic_search()
-    - filter_results()
+class BrainService:
+    - parse_query()
+    - extract_context()
+    - route_to_agents()
+    - aggregate_results()
     
 Responsibilities:
-- Query processing
-- Vector similarity
-- Result ranking
-- Caching
-- Analytics
+- Natural language parsing
+- Context extraction (CIF, dates, merchants, categories)
+- Agent orchestration
+- Parallel execution
+
+class QueryAgent (Base):
+    - validate_context()
+    - build_query()
+    - execute()
+    - format_results()
+
+Specialized Agents:
+- TransactionsQueryAgent: Transaction data queries
+- CustomersQueryAgent: Customer profile queries
+- ContactQueryAgent: Transfer contact queries
+
+class ReasoningService:
+    - synthesize_results()
+    - format_for_llm()
+    - generate_insights()
+    
+Responsibilities:
+- Multi-source data synthesis
+- Response type determination
+- Cross-agent insights
+- LLM context preparation
 ```
 
 #### Auth Service

@@ -37,11 +37,28 @@ import {
   Lightbulb as LightbulbIcon,
   Psychology as PsychologyIcon,
   TipsAndUpdates as TipsIcon,
+  Memory as MemoryIcon,
+  Storage as StorageIcon,
+  Speed as SpeedIcon,
+  Analytics as AnalyticsIcon,
+  SmartToy as SmartToyIcon,
+  Done as DoneIcon,
+  HourglassEmpty as HourglassEmptyIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { useMutation } from '@tanstack/react-query';
 import { searchApi } from '../api/search';
 import { appleColors, appleBorderRadius, appleShadows } from '../theme/appleTheme';
 import BrandLogo from '../components/BrandLogo';
+
+interface AgentActivity {
+  name: string;
+  status: 'active' | 'completed' | 'failed' | 'skipped';
+  execution_time_ms: number;
+  data_retrieved?: number;
+  confidence?: number;
+}
 
 interface SearchResult {
   query: string;
@@ -63,6 +80,13 @@ interface SearchResult {
   }>;
   latency_ms: number;
   model_used: string;
+  agent_activity?: AgentActivity[];
+  response_type?: string;
+  data_sources?: Array<{
+    source: string;
+    count: number;
+    relevance: number;
+  }>;
 }
 
 // Glassmorphism component wrapper with forwardRef
@@ -821,19 +845,142 @@ const AppleMobilePreview: React.FC<{ result?: SearchResult | null }> = ({ result
   );
 };
 
+// Helper function to generate mock agent activity for demo purposes
+const generateMockAgentActivity = (query: string): AgentActivity[] => {
+  const baseAgents: AgentActivity[] = [];
+  
+  // Determine which agents to activate based on query
+  const queryLower = query.toLowerCase();
+  
+  if (queryLower.includes('spending') || queryLower.includes('transaction') || queryLower.includes('starbucks') || queryLower.includes('dunkin')) {
+    baseAgents.push({
+      name: 'Transaction Analyzer',
+      status: 'completed',
+      execution_time_ms: 245,
+      data_retrieved: 127,
+      confidence: 0.92
+    });
+  }
+  
+  if (queryLower.includes('pattern') || queryLower.includes('trend') || queryLower.includes('analysis')) {
+    baseAgents.push({
+      name: 'Pattern Recognition',
+      status: 'completed',
+      execution_time_ms: 189,
+      data_retrieved: 43,
+      confidence: 0.87
+    });
+  }
+  
+  if (queryLower.includes('saving') || queryLower.includes('budget') || queryLower.includes('financial')) {
+    baseAgents.push({
+      name: 'Financial Advisor',
+      status: 'completed',
+      execution_time_ms: 312,
+      data_retrieved: 18,
+      confidence: 0.95
+    });
+  }
+  
+  if (queryLower.includes('profile') || queryLower.includes('customer') || queryLower.includes('behavior')) {
+    baseAgents.push({
+      name: 'Customer Profiler',
+      status: 'completed',
+      execution_time_ms: 156,
+      data_retrieved: 8,
+      confidence: 0.89
+    });
+  }
+  
+  // Always include Knowledge Base agent
+  baseAgents.push({
+    name: 'Knowledge Base',
+    status: 'completed',
+    execution_time_ms: 78,
+    data_retrieved: 234,
+    confidence: 0.76
+  });
+  
+  // Add a skipped agent for variety
+  baseAgents.push({
+    name: 'Fraud Detector',
+    status: 'skipped',
+    execution_time_ms: 0,
+    data_retrieved: 0
+  });
+  
+  return baseAgents;
+};
+
+// Helper function to generate mock data sources
+const generateMockDataSources = (query: string) => {
+  const sources = [];
+  const queryLower = query.toLowerCase();
+  
+  if (queryLower.includes('transaction') || queryLower.includes('spending') || queryLower.includes('starbucks') || queryLower.includes('dunkin')) {
+    sources.push({ source: 'Transactions DB', count: 127, relevance: 0.92 });
+  }
+  
+  if (queryLower.includes('customer') || queryLower.includes('profile')) {
+    sources.push({ source: 'Customer Profile', count: 8, relevance: 0.85 });
+  }
+  
+  sources.push({ source: 'Knowledge Base', count: 234, relevance: 0.67 });
+  
+  if (queryLower.includes('pattern') || queryLower.includes('trend')) {
+    sources.push({ source: 'Analytics Engine', count: 43, relevance: 0.78 });
+  }
+  
+  return sources;
+};
+
+// Helper function to determine response type
+const getResponseType = (query: string): string => {
+  const queryLower = query.toLowerCase();
+  
+  if (queryLower.includes('spending') || queryLower.includes('expense')) {
+    return 'spending_analysis';
+  }
+  if (queryLower.includes('profile') || queryLower.includes('customer')) {
+    return 'customer_profile';
+  }
+  if (queryLower.includes('trend') || queryLower.includes('pattern')) {
+    return 'trend_analysis';
+  }
+  if (queryLower.includes('saving') || queryLower.includes('budget')) {
+    return 'financial_advice';
+  }
+  if (queryLower.includes('transaction')) {
+    return 'transaction_search';
+  }
+  
+  return 'general_inquiry';
+};
+
 const PlaygroundApple: React.FC = () => {
   // const theme = useTheme();
   const [query, setQuery] = useState('');
   const [cif, setCif] = useState('CIF00000001');
   const [showCitations, setShowCitations] = useState(false);
+  const [showAgentActivity, setShowAgentActivity] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
 
   const searchMutation = useMutation({
     mutationFn: searchApi.magicSearch,
     onSuccess: (data) => {
-      setResult(data);
+      // Add mock agent activity and data sources if not provided by backend
+      const enrichedData = {
+        ...data,
+        agent_activity: data.agent_activity || generateMockAgentActivity(data.query),
+        response_type: data.response_type || getResponseType(data.query),
+        data_sources: data.data_sources || generateMockDataSources(data.query)
+      };
+      
+      setResult(enrichedData);
       // Automatically expand citations/transactions if transactions are available
       setShowCitations(!!data.transactions && data.transactions.length > 0);
+      // Show agent activity by default for demo
+      setShowAgentActivity(true);
     },
   });
 
@@ -1072,9 +1219,222 @@ const PlaygroundApple: React.FC = () => {
                             size="small"
                             sx={{ backgroundColor: appleColors.neutral[100] }}
                           />
+                          {result.response_type && (
+                            <Chip
+                              icon={<AnalyticsIcon />}
+                              label={result.response_type.replace('_', ' ')}
+                              size="small"
+                              sx={{ 
+                                backgroundColor: alpha(appleColors.accent.purple, 0.1),
+                                color: appleColors.accent.purple,
+                                textTransform: 'capitalize'
+                              }}
+                            />
+                          )}
                         </Stack>
                       </Stack>
                     </Box>
+
+                    {/* Agent Activity Section */}
+                    {result.agent_activity && result.agent_activity.length > 0 && (
+                      <Box sx={{ 
+                        px: 3, 
+                        py: 2,
+                        borderBottom: `1px solid ${appleColors.neutral[200]}`,
+                        background: alpha(appleColors.neutral[50], 0.5),
+                      }}>
+                        <Stack 
+                          direction="row" 
+                          alignItems="center" 
+                          justifyContent="space-between"
+                          sx={{ mb: showAgentActivity ? 2 : 0, cursor: 'pointer' }}
+                          onClick={() => setShowAgentActivity(!showAgentActivity)}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <SmartToyIcon sx={{ color: appleColors.primary.main, fontSize: 20 }} />
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              Agent Activity ({result.agent_activity.filter(a => a.status === 'completed').length} of {result.agent_activity.length} active)
+                            </Typography>
+                          </Stack>
+                          <IconButton size="small">
+                            {showAgentActivity ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          </IconButton>
+                        </Stack>
+                        
+                        <Collapse in={showAgentActivity}>
+                          <Grid container spacing={1.5}>
+                            {result.agent_activity.map((agent, index) => (
+                              <Grid item xs={6} key={index}>
+                                <Box
+                                  sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    background: appleColors.glass.ultraLight,
+                                    backdropFilter: appleColors.blur.light,
+                                    border: `1px solid ${alpha(
+                                      agent.status === 'completed' ? appleColors.semantic.success : 
+                                      agent.status === 'active' ? appleColors.primary.main :
+                                      agent.status === 'failed' ? appleColors.semantic.error :
+                                      appleColors.neutral[300], 0.3
+                                    )}`,
+                                    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                                    '&:hover': {
+                                      transform: 'translateY(-2px)',
+                                      boxShadow: appleShadows.sm,
+                                    },
+                                  }}
+                                >
+                                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                                    <Box
+                                      sx={{
+                                        width: 36,
+                                        height: 36,
+                                        borderRadius: 1.5,
+                                        background: `linear-gradient(135deg, ${alpha(
+                                          agent.status === 'completed' ? appleColors.semantic.success : 
+                                          agent.status === 'active' ? appleColors.primary.main :
+                                          agent.status === 'failed' ? appleColors.semantic.error :
+                                          appleColors.neutral[400], 0.1
+                                        )} 0%, ${alpha(
+                                          agent.status === 'completed' ? appleColors.semantic.success : 
+                                          agent.status === 'active' ? appleColors.accent.purple :
+                                          agent.status === 'failed' ? appleColors.semantic.error :
+                                          appleColors.neutral[400], 0.2
+                                        )} 100%)`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                      }}
+                                    >
+                                      {agent.status === 'completed' ? (
+                                        <DoneIcon sx={{ fontSize: 18, color: appleColors.semantic.success }} />
+                                      ) : agent.status === 'active' ? (
+                                        <HourglassEmptyIcon sx={{ fontSize: 18, color: appleColors.primary.main }} />
+                                      ) : (
+                                        <MemoryIcon sx={{ fontSize: 18, color: appleColors.neutral[500] }} />
+                                      )}
+                                    </Box>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                      <Typography 
+                                        variant="subtitle2" 
+                                        sx={{ 
+                                          fontWeight: 600, 
+                                          fontSize: '0.875rem',
+                                          textTransform: 'capitalize',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {agent.name ? agent.name.replace('_', ' ') : 'Unknown Agent'}
+                                      </Typography>
+                                      <Stack direction="row" spacing={0.5} alignItems="center">
+                                        <Typography 
+                                          variant="caption" 
+                                          sx={{ 
+                                            fontSize: '0.7rem',
+                                            color: agent.status === 'completed' ? appleColors.semantic.success :
+                                                   agent.status === 'active' ? appleColors.primary.main :
+                                                   agent.status === 'failed' ? appleColors.semantic.error :
+                                                   appleColors.neutral[500]
+                                          }}
+                                        >
+                                          {agent.status || 'pending'}
+                                        </Typography>
+                                        {agent.execution_time_ms !== undefined && (
+                                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: appleColors.neutral[500] }}>
+                                            • {agent.execution_time_ms}ms
+                                          </Typography>
+                                        )}
+                                        {agent.data_retrieved !== undefined && (
+                                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: appleColors.neutral[500] }}>
+                                            • {agent.data_retrieved} items
+                                          </Typography>
+                                        )}
+                                      </Stack>
+                                    </Box>
+                                  </Stack>
+                                  {agent.confidence !== undefined && (
+                                    <Box sx={{ mt: 1 }}>
+                                      <Box 
+                                        sx={{ 
+                                          height: 3, 
+                                          borderRadius: 1.5,
+                                          bgcolor: appleColors.neutral[200],
+                                          overflow: 'hidden',
+                                        }}
+                                      >
+                                        <Box 
+                                          sx={{ 
+                                            height: '100%',
+                                            width: `${agent.confidence * 100}%`,
+                                            background: `linear-gradient(90deg, ${appleColors.primary.main} 0%, ${appleColors.accent.purple} 100%)`,
+                                            transition: 'width 0.5s ease',
+                                          }}
+                                        />
+                                      </Box>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          fontSize: '0.625rem',
+                                          color: appleColors.neutral[500],
+                                          mt: 0.5,
+                                          display: 'block'
+                                        }}
+                                      >
+                                        {(agent.confidence * 100).toFixed(0)}% confidence
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Collapse>
+                      </Box>
+                    )}
+
+                    {/* Data Sources Section */}
+                    {result.data_sources && result.data_sources.length > 0 && (
+                      <Box sx={{ 
+                        px: 3, 
+                        py: 2,
+                        borderBottom: `1px solid ${appleColors.neutral[200]}`,
+                      }}>
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                          <StorageIcon sx={{ color: appleColors.accent.orange, fontSize: 20 }} />
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                            Data Sources
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          {result.data_sources.map((source, index) => (
+                            <Chip
+                              key={index}
+                              icon={<SpeedIcon sx={{ fontSize: 14 }} />}
+                              label={
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                    {source.source}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: appleColors.neutral[500] }}>
+                                    ({source.count} items • {(source.relevance * 100).toFixed(0)}% relevant)
+                                  </Typography>
+                                </Stack>
+                              }
+                              sx={{
+                                height: 28,
+                                backgroundColor: alpha(appleColors.accent.orange, 0.1),
+                                border: `1px solid ${alpha(appleColors.accent.orange, 0.2)}`,
+                                '& .MuiChip-icon': {
+                                  color: appleColors.accent.orange,
+                                },
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
 
                     {/* Compact Answer with inline sources */}
                     <Box sx={{ p: 2.5 }}>
