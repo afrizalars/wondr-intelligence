@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
   { title: 'Playground', path: '/playground', icon: <AutoAwesomeIcon /> },
   { title: 'Merchants', path: '/merchants', icon: <StoreIcon /> },
   { title: 'Guardrails', path: '/guardrails', icon: <ShieldIcon /> },
-  { title: 'Prompt Templates', path: '/prompts', icon: <DescriptionIcon /> },
+  { title: 'Prompt Style', path: '/prompts', icon: <DescriptionIcon /> },
   { title: 'API Keys', path: '/api-keys', icon: <KeyIcon /> },
   { title: 'Search History', path: '/history', icon: <HistoryIcon /> },
   { title: 'Global Knowledge', path: '/knowledge', icon: <SchoolIcon /> },

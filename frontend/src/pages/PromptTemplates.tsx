@@ -5,10 +5,10 @@ const PromptTemplates: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Prompt Templates
+        Prompt Style
       </Typography>
       <Paper sx={{ p: 3 }}>
-        <Typography>Prompt template management coming soon...</Typography>
+        <Typography>Prompt style configuration coming soon...</Typography>
       </Paper>
     </Box>
   );

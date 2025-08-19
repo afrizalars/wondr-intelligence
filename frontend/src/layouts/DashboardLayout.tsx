@@ -37,7 +37,7 @@ const menuItems = [
   { text: 'Playground', icon: <PlayIcon />, path: '/playground' },
   { text: 'Merchants', icon: <StoreIcon />, path: '/merchants' },
   { text: 'Guardrails', icon: <SecurityIcon />, path: '/guardrails' },
-  { text: 'Prompt Templates', icon: <TextIcon />, path: '/prompts' },
+  { text: 'Prompt Style', icon: <TextIcon />, path: '/prompts' },
   { text: 'API Keys', icon: <KeyIcon />, path: '/api-keys' },
   { text: 'Search History', icon: <HistoryIcon />, path: '/history' },
   { text: 'Global Knowledge', icon: <UploadIcon />, path: '/knowledge' },
