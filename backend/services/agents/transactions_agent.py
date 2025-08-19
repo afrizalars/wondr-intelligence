@@ -125,7 +125,8 @@ class TransactionsAgent(BaseQueryAgent):
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute aggregation queries on transactions.
+        Execute aggregation queries on transactions with transaction list.
+        Returns both aggregation summary and list of transactions.
         
         Args:
             db: Database session
@@ -133,7 +134,7 @@ class TransactionsAgent(BaseQueryAgent):
             context: Query context
             
         Returns:
-            Aggregation results
+            Combined aggregation and transaction results
         """
         # Build WHERE conditions
         conditions = ["cif = :cif"]
@@ -149,21 +150,57 @@ class TransactionsAgent(BaseQueryAgent):
                 conditions.append("transaction_date <= :end_date")
                 params["end_date"] = date_range["end"]
         
-        # Add category filter
-        if "categories" in context and context["categories"]:
-            categories = context["categories"]
-            category_placeholders = ', '.join([f":cat_{i}" for i in range(len(categories))])
-            conditions.append(f"category IN ({category_placeholders})")
-            for i, cat in enumerate(categories):
-                params[f"cat_{i}"] = cat
+        # Build comprehensive search conditions
+        search_conditions = []
+        param_idx = 0
         
-        # Add merchant filter
+        # Add search_keywords if present
+        if "search_keywords" in context and context["search_keywords"]:
+            keywords = context["search_keywords"]
+            for keyword in keywords:
+                search_conditions.append(f"""(
+                    LOWER(merchant_name) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(description) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(category) LIKE LOWER(:search_{param_idx})
+                )""")
+                params[f"search_{param_idx}"] = f"%{keyword}%"
+                param_idx += 1
+        
+        # ALSO add merchants if present (they might have variations)
         if "merchants" in context and context["merchants"]:
             merchants = context["merchants"]
-            merchant_placeholders = ', '.join([f":merchant_{i}" for i in range(len(merchants))])
-            conditions.append(f"merchant_name IN ({merchant_placeholders})")
-            for i, merchant in enumerate(merchants):
-                params[f"merchant_{i}"] = merchant
+            for merchant in merchants:
+                search_conditions.append(f"""(
+                    LOWER(merchant_name) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(description) LIKE LOWER(:search_{param_idx})
+                )""")
+                params[f"search_{param_idx}"] = f"%{merchant}%"
+                param_idx += 1
+        
+        # If we have any search conditions, add them
+        if search_conditions:
+            conditions.append(f"({' OR '.join(search_conditions)})")
+        
+        # Add categories to search if present (as optional OR condition, not mandatory)
+        # Don't add as a separate filter - categories might not match exactly
+        if "categories" in context and context["categories"] and not search_conditions:
+            # Only use category filter if we don't have better search terms
+            categories = context["categories"]
+            cat_conditions = []
+            for i, cat in enumerate(categories):
+                cat_conditions.append(f"LOWER(category) LIKE LOWER(:cat_{i})")
+                params[f"cat_{i}"] = f"%{cat}%"
+            conditions.append(f"({' OR '.join(cat_conditions)})")
+        
+        # Add standalone description filter if provided and not already covered
+        if "description" in context and context["description"] and not search_conditions:
+            conditions.append("LOWER(description) LIKE LOWER(:description)")
+            params["description"] = f"%{context['description']}%"
+        
+        # Add transaction_type filter (case-insensitive)
+        if "transaction_type" in context and context["transaction_type"]:
+            conditions.append("LOWER(transaction_type) = LOWER(:transaction_type)")
+            params["transaction_type"] = context["transaction_type"]
         
         where_clause = " AND ".join(conditions)
         
@@ -221,14 +258,36 @@ class TransactionsAgent(BaseQueryAgent):
         # Log the query being executed
         logger.info(f"[TransactionsAgent] Executing aggregation query")
         logger.info(f"  Context: CIF={cif}, dates={context.get('dates')}, categories={context.get('categories')}, merchants={context.get('merchants')}")
-        logger.debug(f"  SQL: {str(query).replace(':cif', cif)[:200]}...")
-        logger.debug(f"  Parameters: {params}")
+        
+        # Print the full SQL query
+        sql_str = str(query)
+        logger.info(f"[TransactionsAgent] SQL Query:")
+        logger.info(f"  {sql_str}")
+        logger.info(f"[TransactionsAgent] Query Parameters:")
+        for key, value in params.items():
+            logger.info(f"  {key} = {value}")
         
         result = await db.execute(query, params)
         
         if "breakdown" in query_text:
             rows = result.fetchall()
             logger.info(f"[TransactionsAgent] Query returned {len(rows)} groups/categories")
+            
+            # Log raw results for breakdown
+            if rows:
+                logger.info(f"[TransactionsAgent] Raw Breakdown Results (first 5):")
+                for i, row in enumerate(rows[:5], 1):
+                    logger.info(f"  Row {i}:")
+                    for key, value in row._mapping.items():
+                        if isinstance(value, Decimal):
+                            logger.info(f"    {key}: {float(value)}")
+                        elif isinstance(value, (date, datetime)):
+                            logger.info(f"    {key}: {value.isoformat()}")
+                        else:
+                            logger.info(f"    {key}: {value}")
+                if len(rows) > 5:
+                    logger.info(f"  ... and {len(rows) - 5} more rows")
+            
             return {
                 "type": "breakdown",
                 "items": [
@@ -247,9 +306,22 @@ class TransactionsAgent(BaseQueryAgent):
         else:
             row = result.fetchone()
             logger.info(f"[TransactionsAgent] Aggregation result fetched")
+            
+            aggregation_summary = {}
             if row:
-                # Log summary of results
+                # Log raw result
                 row_dict = row._mapping
+                logger.info(f"[TransactionsAgent] Raw Result:")
+                for key, value in row_dict.items():
+                    if isinstance(value, Decimal):
+                        logger.info(f"  {key}: {float(value)}")
+                    elif isinstance(value, (date, datetime)):
+                        logger.info(f"  {key}: {value.isoformat()}")
+                    else:
+                        logger.info(f"  {key}: {value}")
+                
+                # Log summary of results
+                logger.info(f"[TransactionsAgent] Formatted Summary:")
                 logger.info(f"  Total transactions: {row_dict.get('total_transactions', 0)}")
                 spending = row_dict.get('total_spending', 0)
                 if spending is not None:
@@ -257,19 +329,72 @@ class TransactionsAgent(BaseQueryAgent):
                 else:
                     logger.info(f"  Total spending: Rp 0")
                 logger.info(f"  Unique merchants: {row_dict.get('unique_merchants', 0)}")
-            if row:
-                return {
-                    "type": "aggregation",
-                    "summary": {
+                
+                aggregation_summary = {
+                    key: (
+                        float(value) if isinstance(value, Decimal)
+                        else value.isoformat() if isinstance(value, date)
+                        else value
+                    )
+                    for key, value in row._mapping.items()
+                }
+            
+            # Now fetch the transaction list for combined response
+            logger.info(f"[TransactionsAgent] Fetching transaction list for combined response")
+            
+            # Build query for transaction list
+            list_query = text(f"""
+                SELECT 
+                    id,
+                    transaction_date,
+                    description,
+                    merchant_name,
+                    amount,
+                    category,
+                    transaction_type,
+                    location,
+                    reference_number
+                FROM transactions_raw
+                WHERE {where_clause}
+                ORDER BY transaction_date DESC, ABS(amount) DESC
+                LIMIT 20
+            """)
+            
+            logger.info(f"[TransactionsAgent] Transaction List SQL Query:")
+            logger.info(f"  {str(list_query)}")
+            
+            list_result = await db.execute(list_query, params)
+            transactions = list_result.fetchall()
+            
+            logger.info(f"[TransactionsAgent] Found {len(transactions)} transactions for list")
+            
+            # Log sample transactions
+            if transactions:
+                logger.info(f"[TransactionsAgent] Sample Transactions (first 3):")
+                for i, trans in enumerate(transactions[:3], 1):
+                    t = trans._mapping
+                    amount_val = t.get('amount', 0)
+                    amount_str = f"Rp {float(amount_val):,.2f}" if amount_val is not None else "Rp 0"
+                    logger.info(f"  {i}. {t.get('transaction_date')} | {t.get('merchant_name')} | {amount_str} | {t.get('category')}")
+            
+            # Return combined response
+            return {
+                "type": "combined",
+                "summary": aggregation_summary,
+                "transactions": [
+                    {
                         key: (
                             float(value) if isinstance(value, Decimal)
                             else value.isoformat() if isinstance(value, date)
-                            else value
+                            else str(value) if value is not None
+                            else None
                         )
-                        for key, value in row._mapping.items()
+                        for key, value in trans._mapping.items()
                     }
-                }
-            return {"type": "aggregation", "summary": {}}
+                    for trans in transactions
+                ],
+                "transaction_count": len(transactions)
+            }
     
     async def _execute_detail_query(
         self,
@@ -377,22 +502,55 @@ class TransactionsAgent(BaseQueryAgent):
                 conditions.append("transaction_date <= :end_date")
                 params["end_date"] = date_range["end"]
         
+        # Build comprehensive search conditions
+        search_conditions = []
+        param_idx = 0
+        
+        # Add search_keywords if present
+        if "search_keywords" in context and context["search_keywords"]:
+            keywords = context["search_keywords"]
+            for keyword in keywords:
+                search_conditions.append(f"""(
+                    LOWER(merchant_name) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(description) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(category) LIKE LOWER(:search_{param_idx})
+                )""")
+                params[f"search_{param_idx}"] = f"%{keyword}%"
+                param_idx += 1
+        
+        # ALSO add merchants if present (they might have variations)
         if "merchants" in context and context["merchants"]:
             merchants = context["merchants"]
-            merchant_placeholders = ', '.join([f":merchant_{i}" for i in range(len(merchants))])
-            conditions.append(f"merchant_name IN ({merchant_placeholders})")
-            for i, merchant in enumerate(merchants):
-                params[f"merchant_{i}"] = merchant
+            for merchant in merchants:
+                search_conditions.append(f"""(
+                    LOWER(merchant_name) LIKE LOWER(:search_{param_idx}) OR 
+                    LOWER(description) LIKE LOWER(:search_{param_idx})
+                )""")
+                params[f"search_{param_idx}"] = f"%{merchant}%"
+                param_idx += 1
         
-        if "categories" in context and context["categories"]:
+        # If we have any search conditions, add them
+        if search_conditions:
+            conditions.append(f"({' OR '.join(search_conditions)})")
+        
+        # Add categories to search if present (as optional OR condition, not mandatory)
+        # Don't add as a separate filter - categories might not match exactly
+        if "categories" in context and context["categories"] and not search_conditions:
+            # Only use category filter if we don't have better search terms
             categories = context["categories"]
-            category_placeholders = ', '.join([f":cat_{i}" for i in range(len(categories))])
-            conditions.append(f"category IN ({category_placeholders})")
+            cat_conditions = []
             for i, cat in enumerate(categories):
-                params[f"cat_{i}"] = cat
+                cat_conditions.append(f"LOWER(category) LIKE LOWER(:cat_{i})")
+                params[f"cat_{i}"] = f"%{cat}%"
+            conditions.append(f"({' OR '.join(cat_conditions)})")
+        
+        # Add standalone description filter if provided and not already covered
+        if "description" in context and context["description"] and not search_conditions:
+            conditions.append("LOWER(description) LIKE LOWER(:description)")
+            params["description"] = f"%{context['description']}%"
         
         if "transaction_type" in context:
-            conditions.append("transaction_type = :transaction_type")
+            conditions.append("LOWER(transaction_type) = LOWER(:transaction_type)")
             params["transaction_type"] = context["transaction_type"]
         
         if "amount_range" in context:
@@ -431,6 +589,11 @@ class TransactionsAgent(BaseQueryAgent):
         logger.info(f"[TransactionsAgent] Executing search query")
         logger.info(f"  Filters: dates={context.get('date_range')}, merchants={context.get('merchants')}, categories={context.get('categories')}")
         logger.info(f"  Limit: {limit}")
+        logger.info(f"[TransactionsAgent] SQL Query:")
+        logger.info(f"  {str(query)}")
+        logger.info(f"[TransactionsAgent] Query Parameters:")
+        for key, value in params.items():
+            logger.info(f"  {key} = {value}")
         
         result = await db.execute(query, params)
         rows = result.fetchall()
